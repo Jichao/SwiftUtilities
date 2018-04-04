@@ -116,13 +116,13 @@ public class ObservableProperty <Element: Equatable>: ObservableType {
     fileprivate var observers = NSMapTable <AnyObject, Box <Callback>> (keyOptions: .weakMemory, valueOptions: .strongMemory)
 
     fileprivate func notifyObservers(oldValue: Element, newValue: Element) {
-        let callbacks = observers.objectEnumerator()!.allObjects.map() {
+        let callbacks = observers.objectEnumerator()?.allObjects.map() {
             object -> Callback in
             let box = object as! Box <Callback>
             return box.value
         }
         
-        callbacks.forEach() {
+        callbacks?.forEach() {
             (callback) in
             
             switch callback {
@@ -216,13 +216,13 @@ public class ObservableOptionalProperty <Element: Equatable>: ObservableType, Ex
     fileprivate var observers = NSMapTable <AnyObject, Box <Callback>> (keyOptions: .weakMemory, valueOptions: .strongMemory)
 
     fileprivate func notifyObservers(oldValue: Element?, newValue: Element?) {
-        let callbacks = self.observers.objectEnumerator()!.allObjects.map() {
+        let callbacks = self.observers.objectEnumerator()?.allObjects.map() {
             object -> Callback in
             let box = object as! Box <Callback>
             return box.value
         }
         
-        callbacks.forEach() {
+        callbacks?.forEach() {
             (callback) in
             
             switch callback {
