@@ -11,55 +11,45 @@ import XCTest
 import SwiftUtilities
 
 class ObservableTests: XCTestCase {
+    
+    func testAddObservable() {
+        let o = ObservableProperty(1)
+        let queue = DispatchQueue.main
+        
+        o.addObserver(self, queue: queue) { (value: Int) in
+            print("value in observer=\(o.value) callbackValue=\(value)")
+            //self.o.removeObserver(self)
+            o.value = 3
+        }
+    }
 
     func testSimple() {
         
+        let o = ObservableProperty(100)
+        
         class C {
-            let o = ObservableProperty(100)
-            
             init() {
-                
-                let queue = DispatchQueue.global()
-                o.addObserver(self) { (value: Int) in
-                    print("value in observer=\(self.o.value) callbackValue=\(value)")
-                    self.o.removeObserver(self)
-                    self.o.value = 103
-                }
-                
-                //o.removeObserver(self)
-//                DispatchQueue.global().sync {
-//                    o.value = 99
-//                    print(o.value)
-//                    //o.removeObserver(self)
-//                }
-                
-//                DispatchQueue.global().async {
-//                    self.o.value = 199
-//                    print(self.o.value)
-//                    //             o.removeObserver(self)
-//                }
-                
-//                queue.async {
-//                    self.o.value = 101
-//                    print(self.o.value)
-//                }
-//                o.removeObserver(self)
-
-                o.value = 92
+                print("init")
             }
             deinit {
                 print("deinit")
-                o.removeObserver(self)
             }
         }
         
-        var c = C()
-//        DispatchQueue.main.async {
-            c = C()
-//        }
+        var c: C = C()
+        o.addObserver(c) { (i: Int) in
+            print("i=\(i)")
+        }
+        c = C()
+        o.addObserver(c) { (i: Int) in
+            print("new_i=\(i)")
+        }
+        o.value = 99
+
         
-        
-        //XCTAssertEqual(o.value, expected)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            print(c)
+        }
     }
     
     func testPublisher() {

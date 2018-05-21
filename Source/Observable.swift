@@ -97,32 +97,34 @@ public class ObservableProperty <Element: Equatable>: ObservableType {
     private func addObserverInternalQueue(_ observer: AnyObject, closure: @escaping (Element) -> Void) {
         closure(self.value)
         internalQueue.sync {
-            self.observers.setObject(Box(Callback.newValue(closure)), forKey: observer)
+            self.observers[BoxWithObjectIdentifier(observer)] = Box(Callback.newValue(closure))
         }
     }
 
     private func addObserverInternalQueue(_ observer: AnyObject, closure: @escaping (Element, Element) -> Void) {
         closure(self.value, self.value)
         internalQueue.sync {
-            self.observers.setObject(Box(Callback.newAndOldValue(closure)), forKey: observer)
+            self.observers[BoxWithObjectIdentifier(observer)] = Box(Callback.newAndOldValue(closure))
         }
     }
 
     public func removeObserver(_ observer: AnyObject) {
-        self.observers.removeObject(forKey: observer)
+        self.observers.removeValue(forKey: BoxWithObjectIdentifier(observer))
     }
 
     fileprivate typealias Callback = ValueChangeCallback <Element>
-    fileprivate var observers = NSMapTable <AnyObject, Box <Callback>> (keyOptions: .weakMemory, valueOptions: .strongMemory)
-
+    fileprivate var observers = [BoxWithObjectIdentifier : Box <Callback>]()
+    
     fileprivate func notifyObservers(oldValue: Element, newValue: Element) {
-        let callbacks = observers.objectEnumerator()?.allObjects.map() {
-            object -> Callback in
-            let box = object as! Box <Callback>
-            return box.value
-        }
+        var validCallbacks: [Callback] = []
         
-        callbacks?.forEach() {
+        observers.forEach { (key, value) in
+            if key.value != nil {
+                validCallbacks.append(value.value)
+            }
+        }
+
+        validCallbacks.forEach() {
             (callback) in
             
             switch callback {
@@ -197,32 +199,34 @@ public class ObservableOptionalProperty <Element: Equatable>: ObservableType, Ex
     private func addObserverInternalQueue(_ observer: AnyObject, closure: @escaping (Element?) -> Void) {
         closure(self.value)
         internalQueue.sync {
-            self.observers.setObject(Box(Callback.newValue(closure)), forKey: observer)
+            self.observers[BoxWithObjectIdentifier(observer)] = Box(Callback.newValue(closure))
         }
     }
 
     private func addObserverInternalQueue(_ observer: AnyObject, closure: @escaping (Element?, Element?) -> Void) {
         closure(self.value, self.value)
         internalQueue.sync {
-            self.observers.setObject(Box(Callback.newAndOldValue(closure)), forKey: observer)
+            self.observers[BoxWithObjectIdentifier(observer)] = Box(Callback.newAndOldValue(closure))
         }
     }
 
     public func removeObserver(_ observer: AnyObject) {
-        self.observers.removeObject(forKey: observer)
+        self.observers.removeValue(forKey: BoxWithObjectIdentifier(observer))
     }
 
     fileprivate typealias Callback = ValueChangeCallback <Element?>
-    fileprivate var observers = NSMapTable <AnyObject, Box <Callback>> (keyOptions: .weakMemory, valueOptions: .strongMemory)
+    fileprivate var observers = [BoxWithObjectIdentifier : Box <Callback>]()
 
     fileprivate func notifyObservers(oldValue: Element?, newValue: Element?) {
-        let callbacks = self.observers.objectEnumerator()?.allObjects.map() {
-            object -> Callback in
-            let box = object as! Box <Callback>
-            return box.value
+        var validCallbacks: [Callback] = []
+        
+        observers.forEach { (key, value) in
+            if key.value != nil {
+                validCallbacks.append(value.value)
+            }
         }
         
-        callbacks?.forEach() {
+        validCallbacks.forEach() {
             (callback) in
             
             switch callback {

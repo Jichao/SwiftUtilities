@@ -48,3 +48,25 @@ extension Box: CustomStringConvertible {
 		return String(describing: value)
 	}
 }
+
+public class BoxWithObjectIdentifier {
+    public weak var value: AnyObject?
+    public let objectIdentifier: ObjectIdentifier
+    
+    public init(_ value: AnyObject) {
+        self.value = value
+        self.objectIdentifier = ObjectIdentifier(value)
+    }
+}
+
+extension BoxWithObjectIdentifier : Equatable {
+    public static func ==(l: BoxWithObjectIdentifier, r: BoxWithObjectIdentifier) -> Bool {
+        return l.objectIdentifier == r.objectIdentifier
+    }
+}
+
+extension BoxWithObjectIdentifier : Hashable {
+    public var hashValue: Int {
+        return self.objectIdentifier.hashValue
+    }
+}
