@@ -119,10 +119,13 @@ public class ObservableProperty <Element: Equatable>: ObservableType {
         var validCallbacks: [Callback] = []
         
         let _observers = observers
-        
-        _observers.forEach { (key, value) in
-            if key.value != nil {
-                validCallbacks.append(value.value)
+        for key in _observers.keys {
+            guard key.value != nil && _observers.keys.contains(key) else {
+                return
+            }
+            
+            if let callback = _observers[key]?.value {
+                validCallbacks.append(callback)
             }
         }
 
