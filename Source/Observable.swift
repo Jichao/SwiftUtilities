@@ -118,7 +118,9 @@ public class ObservableProperty <Element: Equatable>: ObservableType {
     fileprivate func notifyObservers(oldValue: Element, newValue: Element) {
         var validCallbacks: [Callback] = []
         
-        observers.forEach { (key, value) in
+        let _observers = observers
+        
+        _observers.forEach { (key, value) in
             if key.value != nil {
                 validCallbacks.append(value.value)
             }
