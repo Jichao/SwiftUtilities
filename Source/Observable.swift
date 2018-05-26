@@ -120,8 +120,13 @@ public class ObservableProperty <Element: Equatable>: ObservableType {
         
         let _observers = observers
         for key in _observers.keys {
-            guard key.value != nil && _observers.keys.contains(key) else {
-                return
+            guard key.value != nil else {
+                observers.removeValue(forKey: key)
+                continue
+            }
+            
+            guard _observers.keys.contains(key) else {
+                continue
             }
             
             if let callback = _observers[key]?.value {
@@ -225,9 +230,19 @@ public class ObservableOptionalProperty <Element: Equatable>: ObservableType, Ex
     fileprivate func notifyObservers(oldValue: Element?, newValue: Element?) {
         var validCallbacks: [Callback] = []
         
-        observers.forEach { (key, value) in
-            if key.value != nil {
-                validCallbacks.append(value.value)
+        let _observers = observers
+        for key in _observers.keys {
+            guard key.value != nil else {
+                observers.removeValue(forKey: key)
+                continue
+            }
+            
+            guard _observers.keys.contains(key) else {
+                continue
+            }
+            
+            if let callback = _observers[key]?.value {
+                validCallbacks.append(callback)
             }
         }
         
