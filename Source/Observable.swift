@@ -60,9 +60,7 @@ public class ObservableProperty <Element: Equatable>: ObservableType {
                 }()
                 
                 if oldValue != newValue {
-                    notificationQueue.async {
-                        self.notifyObservers(oldValue: oldValue, newValue: newValue)
-                    }
+                    self.notifyObservers(oldValue: oldValue, newValue: newValue)
                 }
             }
         }
@@ -109,7 +107,9 @@ public class ObservableProperty <Element: Equatable>: ObservableType {
     }
 
     public func removeObserver(_ observer: AnyObject) {
-        self.observers.removeValue(forKey: BoxWithObjectIdentifier(observer))
+        internalQueue.sync {
+            self.observers.removeValue(forKey: BoxWithObjectIdentifier(observer))
+        }
     }
 
     fileprivate typealias Callback = ValueChangeCallback <Element>
@@ -134,16 +134,18 @@ public class ObservableProperty <Element: Equatable>: ObservableType {
             }
         }
 
-        validCallbacks.forEach() {
-            (callback) in
-            
-            switch callback {
-            case .noValue(let closure):
-                closure()
-            case .newValue(let closure):
-                closure(newValue)
-            case .newAndOldValue(let closure):
-                closure(oldValue, newValue)
+        notificationQueue.async {
+            validCallbacks.forEach() {
+                (callback) in
+                
+                switch callback {
+                case .noValue(let closure):
+                    closure()
+                case .newValue(let closure):
+                    closure(newValue)
+                case .newAndOldValue(let closure):
+                    closure(oldValue, newValue)
+                }
             }
         }
     }
@@ -172,9 +174,7 @@ public class ObservableOptionalProperty <Element: Equatable>: ObservableType, Ex
                 }()
                 
                 if oldValue != newValue {
-                    notificationQueue.async {
-                        self.notifyObservers(oldValue: oldValue, newValue: newValue)
-                    }
+                    self.notifyObservers(oldValue: oldValue, newValue: newValue)
                 }
             }
         }
@@ -246,16 +246,18 @@ public class ObservableOptionalProperty <Element: Equatable>: ObservableType, Ex
             }
         }
         
-        validCallbacks.forEach() {
-            (callback) in
-            
-            switch callback {
-            case .noValue(let closure):
-                closure()
-            case .newValue(let closure):
-                closure(newValue)
-            case .newAndOldValue(let closure):
-                closure(oldValue, newValue)
+        notificationQueue.async {
+            validCallbacks.forEach() {
+                (callback) in
+                
+                switch callback {
+                case .noValue(let closure):
+                    closure()
+                case .newValue(let closure):
+                    closure(newValue)
+                case .newAndOldValue(let closure):
+                    closure(oldValue, newValue)
+                }
             }
         }
     }
