@@ -347,7 +347,7 @@ public extension Path {
 
 public extension Path {
 
-    func createDirectory(withIntermediateDirectories: Bool = false, attributes: [String: AnyObject]? = nil) throws {
+    func createDirectory(withIntermediateDirectories: Bool = false, attributes: [FileAttributeKey : Any]? = nil) throws {
         try FileManager().createDirectory(atPath: path, withIntermediateDirectories: withIntermediateDirectories, attributes: attributes)
     }
 

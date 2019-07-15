@@ -34,6 +34,7 @@ import Foundation
 public extension NSRange {
 
     init(range: Range <Int>) {
+        self.init()
         self.location = range.lowerBound
         self.length = range.upperBound - range.lowerBound
     }

@@ -31,41 +31,41 @@
 
 import Foundation
 
-/**
- *  Set of helper methods to convert String ranges to/from NSString ranges
- *
- *  NSString indices are UTF16 based
- *  String "indices" are Grapheme Cluster based
- *  This allows you convert between the two
- *  Converting is useful when using Cocoa APIs that use NSRanges (for example
- *  text view selection ranges or regular expression result ranges).
- */
-public extension String {
-
-    func convert(_ index: NSInteger) -> String.Index? {
-        let utf16Index = utf16.index(utf16.startIndex, offsetBy: index)
-        return utf16Index.samePosition(in: self)
-    }
-
-    func convert(_ range: NSRange) -> Range <String.Index>? {
-        let swiftRange = range.asRange
-        if let startIndex = convert(swiftRange.lowerBound), let endIndex = convert(swiftRange.upperBound) {
-            return startIndex..<endIndex
-        }
-        else {
-            return nil
-        }
-    }
-
-    func convert(_ index: String.Index) -> NSInteger {
-        let utf16Index = index.samePosition(in: utf16)
-        return utf16.distance(from: utf16.startIndex, to: utf16Index)
-    }
-
-    func convert(_ range: Range <String.Index>) -> NSRange {
-        let startIndex = convert(range.lowerBound)
-        let endIndex = convert(range.upperBound)
-        return NSRange(location: startIndex, length: endIndex - startIndex)
-    }
-
-}
+///**
+// *  Set of helper methods to convert String ranges to/from NSString ranges
+// *
+// *  NSString indices are UTF16 based
+// *  String "indices" are Grapheme Cluster based
+// *  This allows you convert between the two
+// *  Converting is useful when using Cocoa APIs that use NSRanges (for example
+// *  text view selection ranges or regular expression result ranges).
+// */
+//public extension String {
+//
+//    func convert(_ index: NSInteger) -> String.Index? {
+//        let utf16Index = utf16.index(utf16.startIndex, offsetBy: index)
+//        return utf16Index.samePosition(in: self)
+//    }
+//
+//    func convert(_ range: NSRange) -> Range <String.Index>? {
+//        let swiftRange = range.asRange
+//        if let startIndex = convert(swiftRange.lowerBound), let endIndex = convert(swiftRange.upperBound) {
+//            return startIndex..<endIndex
+//        }
+//        else {
+//            return nil
+//        }
+//    }
+//
+//    func convert(_ index: String.Index) -> NSInteger {
+//        let utf16Index = index.samePosition(in: utf16)
+//        return utf16.distance(from: utf16.startIndex, to: utf16Index)
+//    }
+//
+//    func convert(_ range: Range <String.Index>) -> NSRange {
+//        let startIndex = convert(range.lowerBound)
+//        let endIndex = convert(range.upperBound)
+//        return NSRange(location: startIndex, length: endIndex - startIndex)
+//    }
+//
+//}

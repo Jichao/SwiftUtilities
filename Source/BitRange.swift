@@ -38,20 +38,20 @@ private extension MemoryLayout {
 // MARK: UnsignedIntegerTypes bitRanges
 
 public func bitRange <T: UnsignedInteger> (value: T, start: Int, count: Int, flipped: Bool = false) -> T {
-    assert(MemoryLayout<T>.size <= MemoryLayout<UIntMax>.size)
-    let bitSize = UIntMax(MemoryLayout<T>.size * 8)
+    assert(MemoryLayout<T>.size <= MemoryLayout<UInt64>.size)
+    let bitSize = UInt64(MemoryLayout<T>.size * 8)
     assert(start + count <= Int(bitSize))
     if flipped {
-        let shift = bitSize - UIntMax(start) - UIntMax(count)
-        let mask = (1 << UIntMax(count)) - 1
-        let intermediate = value.toUIntMax() >> shift & mask
+        let shift = bitSize - UInt64(start) - UInt64(count)
+        let mask = (1 << UInt64(count)) - 1
+        let intermediate = UInt64(value) >> shift & UInt64(mask)
         let result = intermediate
         return T.init(result)
     }
     else {
-        let shift = UIntMax(start)
-        let mask = (1 << UIntMax(count)) - 1
-        let result = value.toUIntMax() >> shift & mask
+        let shift = UInt64(start)
+        let mask = (1 << UInt64(count)) - 1
+        let result = UInt64(value) >> shift & UInt64(mask)
         return T.init(result)
     }
 }
@@ -62,7 +62,7 @@ public func bitRange <T: UnsignedInteger> (value: T, range: Range <Int>, flipped
 
 // MARK: UnsafeBufferPointer bitRanges
 
-public func bitRange <Element> (buffer: UnsafeBufferPointer <Element>, start: Int, count: Int) -> UIntMax {
+public func bitRange <Element> (buffer: UnsafeBufferPointer <Element>, start: Int, count: Int) -> UInt64 {
 
     let pointer = UnsafeRawPointer(buffer.baseAddress)!
 
@@ -72,18 +72,18 @@ public func bitRange <Element> (buffer: UnsafeBufferPointer <Element>, start: In
         return pointer.assumingMemoryBound(to: UInt64.self)[start / MemoryLayout <UInt64>.bitSize]
     }
     else if count == 32 && start % 32 == 0 {
-        return UIntMax(pointer.assumingMemoryBound(to: UInt32.self)[start / MemoryLayout <UInt32>.bitSize])
+        return UInt64(pointer.assumingMemoryBound(to: UInt32.self)[start / MemoryLayout <UInt32>.bitSize])
     }
     else if count == 16 && start % 16 == 0 {
-        return UIntMax(pointer.assumingMemoryBound(to: UInt16.self)[start / MemoryLayout <UInt16>.bitSize])
+        return UInt64(pointer.assumingMemoryBound(to: UInt16.self)[start / MemoryLayout <UInt16>.bitSize])
     }
     else if count == 8 && start % 8 == 0 {
-        return UIntMax(pointer.assumingMemoryBound(to: UInt8.self)[start / MemoryLayout <UInt8>.bitSize])
+        return UInt64(pointer.assumingMemoryBound(to: UInt8.self)[start / MemoryLayout <UInt8>.bitSize])
     }
     else {
         // Slow(er) path. Range is not aligned.
-        let pointer = pointer.assumingMemoryBound(to: UIntMax.self)
-        let wordSize = MemoryLayout<UIntMax>.size * 8
+        let pointer = pointer.assumingMemoryBound(to: UInt64.self)
+        let wordSize = MemoryLayout<UInt64>.size * 8
 
         let end = start + count
 
@@ -100,12 +100,12 @@ public func bitRange <Element> (buffer: UnsafeBufferPointer <Element>, start: In
             let msw = bitRange(value: pointer[offset].bigEndian, range: offsettedStart ..< wordSize, flipped: true)
             let bits = (end - offset * wordSize) % wordSize
             let lsw = bitRange(value: pointer[offset + 1].bigEndian, range: 0 ..< bits, flipped: true)
-            return msw << UIntMax(bits) | lsw
+            return msw << UInt64(bits) | lsw
         }
     }
 }
 
-public func bitRange <Element> (buffer: UnsafeBufferPointer <Element>, range: Range <Int>) -> UIntMax {
+public func bitRange <Element> (buffer: UnsafeBufferPointer <Element>, range: Range <Int>) -> UInt64 {
     return bitRange(buffer: buffer, start: range.lowerBound, count: range.upperBound - range.lowerBound)
 }
 
@@ -114,9 +114,9 @@ public func bitRange <Element> (buffer: UnsafeBufferPointer <Element>, range: Ra
 public func bitSet <T: UnsignedInteger> (value: T, start: Int, count: Int, flipped: Bool = false, newValue: T) -> T {
     assert(start + count <= MemoryLayout<T>.size * 8)
     let mask: T = onesMask(start: start, count: count, flipped: flipped)
-    let shift = UIntMax(flipped == false ? start: (MemoryLayout<T>.size * 8 - start - count))
-    let shiftedNewValue = newValue.toUIntMax() << UIntMax(shift)
-    let result = (value.toUIntMax() & ~mask.toUIntMax()) | (shiftedNewValue & mask.toUIntMax())
+    let shift = UInt64(flipped == false ? start: (MemoryLayout<T>.size * 8 - start - count))
+    let shiftedNewValue = UInt64(newValue) << UInt64(shift)
+    let result = (UInt64(value) & ~UInt64(mask)) | (shiftedNewValue & UInt64(mask))
     return T(result)
 }
 
@@ -126,11 +126,11 @@ public func bitSet <T: UnsignedInteger> (value: T, range: Range <Int>, flipped: 
 
 // MARK: UnsafeMutableBufferPointer bitSets
 
-public func bitSet <Element>(buffer: UnsafeMutableBufferPointer <Element>, start: Int, count: Int, newValue: UIntMax) {
+public func bitSet <Element>(buffer: UnsafeMutableBufferPointer <Element>, start: Int, count: Int, newValue: UInt64) {
     // TODO: Swift3 - why does return an optional?
     let pointer = UnsafeMutableRawPointer(buffer.baseAddress)!
 
-    func set <T: UnsignedInteger> (pointer: UnsafeMutableRawPointer, type: T.Type, newValue: UIntMax) {
+    func set <T: UnsignedInteger> (pointer: UnsafeMutableRawPointer, type: T.Type, newValue: UInt64) {
         pointer.assumingMemoryBound(to: T.self)[start / (MemoryLayout <T>.bitSize)] = T(newValue)
     }
 
@@ -149,8 +149,8 @@ public func bitSet <Element>(buffer: UnsafeMutableBufferPointer <Element>, start
     }
     else {
         // Slow(er) path. Range is not aligned.
-        let pointer = pointer.assumingMemoryBound(to: UIntMax.self)
-        let wordSize = MemoryLayout<UIntMax>.size * 8
+        let pointer = pointer.assumingMemoryBound(to: UInt64.self)
+        let wordSize = MemoryLayout<UInt64>.size * 8
 
         let end = start + count
 
@@ -159,7 +159,7 @@ public func bitSet <Element>(buffer: UnsafeMutableBufferPointer <Element>, start
 
             let offset = start / wordSize
             let value = pointer[offset].bigEndian
-            let result = UIntMax(bigEndian: bitSet(value: value, start: start % wordSize, count: count, flipped: true, newValue: newValue))
+            let result = UInt64(bigEndian: bitSet(value: value, start: start % wordSize, count: count, flipped: true, newValue: newValue))
             pointer[offset] = result
         }
         else {
@@ -169,16 +169,16 @@ public func bitSet <Element>(buffer: UnsafeMutableBufferPointer <Element>, start
     }
 }
 
-public func bitSet <Element>(buffer: UnsafeMutableBufferPointer <Element>, range: Range <Int>, newValue: UIntMax) {
+public func bitSet <Element>(buffer: UnsafeMutableBufferPointer <Element>, range: Range <Int>, newValue: UInt64) {
     bitSet(buffer: buffer, start: range.lowerBound, count: range.upperBound - range.lowerBound, newValue: newValue)
 }
 
 // MARK: -
 
 private func onesMask <T: UnsignedInteger> (start: Int, count: Int, flipped: Bool = false) -> T {
-    let size = UIntMax(MemoryLayout<T>.size * 8)
-    let start = UIntMax(start)
-    let count = UIntMax(count)
+    let size = UInt64(MemoryLayout<T>.size * 8)
+    let start = UInt64(start)
+    let count = UInt64(count)
     let shift = flipped == false ? start: (size - start - count)
     let mask = ((1 << count) - 1) << shift
     return T(mask)

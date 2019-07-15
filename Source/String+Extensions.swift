@@ -29,15 +29,15 @@
 
 import Foundation
 
-public extension String {
-    func substringFromPrefix(_ prefix: String) throws -> String {
-        if prefix.isEmpty {
-            return self
-        }
-        if let range = range(of: prefix) , range.lowerBound == startIndex {
-            return substring(from: range.upperBound)
-        }
-        throw Error.generic("String does not begin with prefix.")
-    }
-}
+//public extension String {
+//    func substringFromPrefix(_ prefix: String) throws -> String {
+//        if prefix.isEmpty {
+//            return self
+//        }
+//        if let range = range(of: prefix) , range.lowerBound == startIndex {
+//            return substring(from: range.upperBound)
+//        }
+//        throw Error.generic("String does not begin with prefix.")
+//    }
+//}
 

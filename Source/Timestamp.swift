@@ -67,8 +67,8 @@ public func < (lhs: Timestamp, rhs: Timestamp) -> Bool {
 // MARK: -
 
 extension Timestamp: Hashable {
-    public var hashValue: Int {
-        return absoluteTime.hashValue
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(absoluteTime.hashValue)
     }
 }
 

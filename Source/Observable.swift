@@ -107,7 +107,7 @@ public class ObservableProperty <Element: Equatable>: ObservableType {
     }
 
     public func removeObserver(_ observer: AnyObject) {
-        internalQueue.sync {
+        return internalQueue.sync {
             self.observers.removeValue(forKey: BoxWithObjectIdentifier(observer))
         }
     }

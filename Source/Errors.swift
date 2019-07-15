@@ -75,7 +75,7 @@ public func tryElseFatalError <T> (_ message: String? = nil, closure: () throws 
     }
 }
 
-public func makeOSStatusError <T: Integer>(_ status: T, description: String? = nil) -> Swift.Error {
+public func makeOSStatusError <T: SignedInteger>(_ status: T, description: String? = nil) -> Swift.Error {
 
     var userInfo: [String: String]? = nil
 
@@ -84,13 +84,13 @@ public func makeOSStatusError <T: Integer>(_ status: T, description: String? = n
     }
 
 
-    let error = NSError(domain: NSOSStatusErrorDomain, code: Int(status.toIntMax()), userInfo: userInfo)
+    let error = NSError(domain: NSOSStatusErrorDomain, code: Int(status), userInfo: userInfo)
     return error
 }
 
 
 public func unimplementedFailure( _ message: @autoclosure () -> String = "", file: StaticString = #file, line: UInt = #line) -> Never  {
-    preconditionFailure(message, file: file, line: line)
+    preconditionFailure(message(), file: file, line: line)
 }
 
 public func withNoOutput <R>( _ block: () throws -> R) throws -> R {

@@ -33,7 +33,7 @@ import Foundation
 
 public class BlockValueTransformer: ValueTransformer {
 
-    public typealias TransformerBlock = (AnyObject!) -> (AnyObject!)
+    public typealias TransformerBlock = (AnyObject?) -> (AnyObject?)
 
     public let block: TransformerBlock
 
@@ -54,6 +54,6 @@ public class BlockValueTransformer: ValueTransformer {
     }
 
     public override func transformedValue(_ value: Any?) -> Any? {
-        return self.block(value as AnyObject!)
+        return self.block(value as AnyObject?)
     }
 }

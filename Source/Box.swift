@@ -66,7 +66,7 @@ extension BoxWithObjectIdentifier : Equatable {
 }
 
 extension BoxWithObjectIdentifier : Hashable {
-    public var hashValue: Int {
-        return self.objectIdentifier.hashValue
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(self.objectIdentifier.hashValue)
     }
 }

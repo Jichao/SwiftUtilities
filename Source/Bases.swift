@@ -47,60 +47,60 @@ public extension BaseDecodable {
 }
 
 // MARK: UInt types + BaseDecodable
+//
+//extension UInt64: BaseDecodable {
+//}
+//
+//extension UInt: BaseDecodable {
+//}
+//
+//extension UInt32: BaseDecodable {
+//}
+//
+//extension UInt16: BaseDecodable {
+//}
+//
+//extension UInt8: BaseDecodable {
+//}
 
-extension UIntMax: BaseDecodable {
-}
-
-extension UInt: BaseDecodable {
-}
-
-extension UInt32: BaseDecodable {
-}
-
-extension UInt16: BaseDecodable {
-}
-
-extension UInt8: BaseDecodable {
-}
-
-extension UnsignedInteger {
-    public static func decodeFromString(_ string: String, base: Int?) throws -> Self {
-        var string = string
-
-        // TODO: Base guessing/expectation is broken
-
-        var finalRadix: NamedRadix
-        if let base = base {
-            guard let radix = NamedRadix(rawValue: base) else {
-                throw Error.generic("No standard prefix for base \(base).")
-            }
-            finalRadix = radix
-        }
-        else {
-            finalRadix = NamedRadix.fromString(string)
-        }
-
-        let prefix = finalRadix.constantPrefix
-        string = try string.substringFromPrefix(prefix)
-
-        var result: Self = 0
-
-        let base = finalRadix.rawValue
-
-        for c in string.utf8 {
-            if let value = try decodeCodeUnit(c, base: base) {
-                result *= Self.init(UIntMax(base))
-                result += Self.init(UIntMax(value))
-            }
-        }
-
-        return result
-    }
-}
+//extension UnsignedInteger {
+//    public static func decodeFromString(_ string: String, base: Int?) throws -> Self {
+//        var string = string
+//
+//        // TODO: Base guessing/expectation is broken
+//
+//        var finalRadix: NamedRadix
+//        if let base = base {
+//            guard let radix = NamedRadix(rawValue: base) else {
+//                throw Error.generic("No standard prefix for base \(base).")
+//            }
+//            finalRadix = radix
+//        }
+//        else {
+//            finalRadix = NamedRadix.fromString(string)
+//        }
+//
+//        let prefix = finalRadix.constantPrefix
+//        string = try string.substringFromPrefix(prefix)
+//
+//        var result: Self = 0
+//
+//        let base = finalRadix.rawValue
+//
+//        for c in string.utf8 {
+//            if let value = try decodeCodeUnit(c, base: base) {
+//                result *= Self.init(UInt64(base))
+//                result += Self.init(UInt64(value))
+//            }
+//        }
+//
+//        return result
+//    }
+//}
 
 // MARK: UInt types + BaseEncodable
 
-extension UIntMax: BaseEncodable {
+extension UInt64: BaseEncodable {
 }
 
 extension UInt: BaseEncodable {
@@ -118,20 +118,20 @@ extension UInt8: BaseEncodable {
 extension UnsignedInteger {
 
     public func encodeToString(base: Int, prefix: Bool = false, width: Int? = nil) throws -> String {
-        let value = toUIntMax()
+        let value = UInt64(self)
 
         var s: String = "0"
         if value != 0 {
             let digits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"]
             s = ""
-            let count = UIntMax(log(Double(value), base: Double(base))) + 1
+            let count = UInt64(log(Double(value), base: Double(base))) + 1
             var value = value
 
             for _ in 0..<count {
-                let digit = value % UIntMax(base)
+                let digit = value % UInt64(base)
                 let char = digits[Int(digit)]
                 s = String(char) + s
-                value /= UIntMax(base)
+                value /= UInt64(base)
             }
         }
 
@@ -282,16 +282,16 @@ func decodeCodeUnit(_ codeUnit: UTF8.CodeUnit, base: Int) throws -> UInt8? {
 
 // MARK: Convenience methods that will probably be deprecated or at least renamed in future
 
-extension Data: BaseEncodable {
-    public func encodeToString(base: Int, prefix: Bool = false, width: Int? = nil) throws -> String {
-        return try withUnsafeBytes() {
-            (bytes: UnsafePointer <UInt8>) -> String in
-
-            let buffer = UnsafeBufferPointer <Void> (start: bytes, count: count)
-            return try buffer.encodeToString(base: base, prefix: prefix, width: width)
-        }
-    }
-}
+//extension Data: BaseEncodable {
+//    public func encodeToString(base: Int, prefix: Bool = false, width: Int? = nil) throws -> String {
+//        return try withUnsafeBytes() {
+//            (bytes: UnsafePointer <UInt8>) -> String in
+//
+//            let buffer = UnsafeBufferPointer <Void> (start: bytes, count: count)
+//            return try buffer.encodeToString(base: base, prefix: prefix, width: width)
+//        }
+//    }
+//}
 
 // TODO: Swift3
 //extension GenericDispatchData: BaseEncodable {
