@@ -1,0 +1,276 @@
+//
+//  Observable.swift
+//  ObservablePattern
+//
+//  Created by Jonathan Wight on 10/23/15.
+//
+//  Copyright © 2016, Jonathan Wight
+//
+//  Redistribution and use in source and binary forms, with or without
+//  modification, are permitted provided that the following conditions are met:
+//
+//  * Redistributions of source code must retain the above copyright notice, this
+//    list of conditions and the following disclaimer.
+//
+//  * Redistributions in binary form must reproduce the above copyright notice,
+//    this list of conditions and the following disclaimer in the documentation
+//    and/or other materials provided with the distribution.
+//
+//  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+//  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+//  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+//  DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+//  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+//  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+//  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+//  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+//  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+//  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+import Foundation
+
+public protocol ObservableType {
+    associatedtype ElementType
+    func addObserver(_ observer: AnyObject, queue: DispatchQueue, closure: @escaping (ElementType) -> Void)
+    func addObserver(_ observer: AnyObject, queue: DispatchQueue, closure: @escaping (ElementType, ElementType) -> Void)
+    func removeObserver(_ observer: AnyObject)
+}
+
+// MARK: -
+
+public class ObservableProperty <Element: Equatable>: ObservableType {
+
+    public typealias ElementType = Element
+    private let internalQueue = DispatchQueue.init(label: "ObservableProperty.queue")
+    private let notificationQueue = DispatchQueue.init(label: "ObservablePropertyNotification.queue")
+    private let removeObservableQueue = DispatchQueue.init(label: "ObservablePropertyRemoveObservable.queue")
+    
+    public var value: Element {
+        get {
+            return internalValue
+        }
+        set {
+            internalQueue.sync {
+                let oldValue = {
+                    () -> Element in
+                    let oldValue = self.internalValue
+                    self.internalValue = newValue
+                    return oldValue
+                }()
+                
+                if oldValue != newValue {
+                    self.notifyObservers(oldValue: oldValue, newValue: newValue)
+                }
+            }
+        }
+    }
+
+    internal var internalValue: Element
+
+    public init(_ value: Element) {
+        internalValue = value
+    }
+    
+    public func addObserver(_ observer: AnyObject, queue: DispatchQueue = DispatchQueue.main, closure: @escaping (ElementType) -> Void) {
+        self.addObserverInternalQueue(observer) {
+            (newValue: ElementType) in
+            
+            queue.async {
+                closure(newValue)
+            }
+        }
+    }
+    
+    public func addObserver(_ observer: AnyObject, queue: DispatchQueue = DispatchQueue.main, closure: @escaping (ElementType, ElementType) -> Void) {
+        self.addObserverInternalQueue(observer) {
+            (oldValue: ElementType, newValue: ElementType) in
+            
+            queue.async {
+                closure(oldValue, newValue)
+            }
+        }
+    }
+
+    private func addObserverInternalQueue(_ observer: AnyObject, closure: @escaping (Element) -> Void) {
+        closure(self.value)
+        internalQueue.sync {
+            self.observers[BoxWithObjectIdentifier(observer)] = Box(Callback.newValue(closure))
+        }
+    }
+
+    private func addObserverInternalQueue(_ observer: AnyObject, closure: @escaping (Element, Element) -> Void) {
+        closure(self.value, self.value)
+        internalQueue.sync {
+            self.observers[BoxWithObjectIdentifier(observer)] = Box(Callback.newAndOldValue(closure))
+        }
+    }
+
+    public func removeObserver(_ observer: AnyObject) {
+        return internalQueue.sync {
+            self.observers.removeValue(forKey: BoxWithObjectIdentifier(observer))
+        }
+    }
+
+    fileprivate typealias Callback = ValueChangeCallback <Element>
+    fileprivate var observers = [BoxWithObjectIdentifier : Box <Callback>]()
+    
+    fileprivate func notifyObservers(oldValue: Element, newValue: Element) {
+        var validCallbacks: [Callback] = []
+        
+        let _observers = observers
+        for key in _observers.keys {
+            guard key.value != nil else {
+                observers.removeValue(forKey: key)
+                continue
+            }
+            
+            guard _observers.keys.contains(key) else {
+                continue
+            }
+            
+            if let callback = _observers[key]?.value {
+                validCallbacks.append(callback)
+            }
+        }
+
+        notificationQueue.async {
+            validCallbacks.forEach() {
+                (callback) in
+                
+                switch callback {
+                case .noValue(let closure):
+                    closure()
+                case .newValue(let closure):
+                    closure(newValue)
+                case .newAndOldValue(let closure):
+                    closure(oldValue, newValue)
+                }
+            }
+        }
+    }
+}
+
+// MARK: -
+
+public class ObservableOptionalProperty <Element: Equatable>: ObservableType, ExpressibleByNilLiteral {
+
+    public typealias ElementType = Element?
+    private let internalQueue = DispatchQueue.init(label: "ObservableOptionalProperty.queue")
+    private let notificationQueue = DispatchQueue.init(label: "ObservableOptionalPropertyNotification.queue")
+    private let removeObservableQueue = DispatchQueue.init(label: "ObservableOptionalPropertyRemoveObservable.queue")
+
+    public var value: Element? {
+        get {
+            return internalValue
+        }
+        set {
+            internalQueue.sync {
+                let oldValue = {
+                    () -> Element? in
+                    let oldValue = self.internalValue
+                    self.internalValue = newValue
+                    return oldValue
+                }()
+                
+                if oldValue != newValue {
+                    self.notifyObservers(oldValue: oldValue, newValue: newValue)
+                }
+            }
+        }
+    }
+
+    internal var internalValue: Element?
+
+    public init(_ value: Element?) {
+        internalValue = value
+    }
+    
+    public func addObserver(_ observer: AnyObject, queue: DispatchQueue = DispatchQueue.main, closure: @escaping (ElementType) -> Void) {
+        self.addObserverInternalQueue(observer) {
+            (newValue: ElementType) in
+            
+            queue.async {
+                closure(newValue)
+            }
+        }
+    }
+    
+    public func addObserver(_ observer: AnyObject, queue: DispatchQueue = DispatchQueue.main, closure: @escaping (ElementType, ElementType) -> Void) {
+        self.addObserverInternalQueue(observer) {
+            (oldValue: ElementType, newValue: ElementType) in
+            
+            queue.async {
+                closure(oldValue, newValue)
+            }
+        }
+    }
+
+    private func addObserverInternalQueue(_ observer: AnyObject, closure: @escaping (Element?) -> Void) {
+        closure(self.value)
+        internalQueue.sync {
+            self.observers[BoxWithObjectIdentifier(observer)] = Box(Callback.newValue(closure))
+        }
+    }
+
+    private func addObserverInternalQueue(_ observer: AnyObject, closure: @escaping (Element?, Element?) -> Void) {
+        closure(self.value, self.value)
+        internalQueue.sync {
+            self.observers[BoxWithObjectIdentifier(observer)] = Box(Callback.newAndOldValue(closure))
+        }
+    }
+
+    public func removeObserver(_ observer: AnyObject) {
+        self.observers.removeValue(forKey: BoxWithObjectIdentifier(observer))
+    }
+
+    fileprivate typealias Callback = ValueChangeCallback <Element?>
+    fileprivate var observers = [BoxWithObjectIdentifier : Box <Callback>]()
+
+    fileprivate func notifyObservers(oldValue: Element?, newValue: Element?) {
+        var validCallbacks: [Callback] = []
+        
+        let _observers = observers
+        for key in _observers.keys {
+            guard key.value != nil else {
+                observers.removeValue(forKey: key)
+                continue
+            }
+            
+            guard _observers.keys.contains(key) else {
+                continue
+            }
+            
+            if let callback = _observers[key]?.value {
+                validCallbacks.append(callback)
+            }
+        }
+        
+        notificationQueue.async {
+            validCallbacks.forEach() {
+                (callback) in
+                
+                switch callback {
+                case .noValue(let closure):
+                    closure()
+                case .newValue(let closure):
+                    closure(newValue)
+                case .newAndOldValue(let closure):
+                    closure(oldValue, newValue)
+                }
+            }
+        }
+    }
+
+    public required init(nilLiteral: ()) {
+        value = nil
+    }
+}
+
+// MARK: -
+
+private enum ValueChangeCallback <T> {
+    case noValue(() -> Void)
+    case newValue((T) -> Void)
+    case newAndOldValue((T, T) -> Void)
+}
