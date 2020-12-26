@@ -65,7 +65,6 @@
 		A4D3007C256CA7AB008E3DBE /* Data+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4D30021256CA7AA008E3DBE /* Data+Extensions.swift */; };
 		A4D3007E256CA7AB008E3DBE /* Search.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4D30022256CA7AA008E3DBE /* Search.swift */; };
 		A4D30080256CA7AB008E3DBE /* SwiftUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4D30023256CA7AA008E3DBE /* SwiftUtilities.swift */; };
-		A4D300CA256CADAF008E3DBE /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 454820E91D15CF23003AB1D6 /* Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -523,7 +522,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A4D300CA256CADAF008E3DBE /* Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
